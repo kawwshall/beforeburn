@@ -1,0 +1,49 @@
+:root {
+  /* Core surfaces */
+  --paper: #F7FAF9;
+  --surface: #FFFFFF;
+  --ink: #142125;
+  --muted: #52646B;
+  --line: #DCE6E5;
+  --mist: #EAF3F3;
+  --blue: #3F7182;
+  --deep: #19313A;
+  --night: #080D1E;
+
+  /* State and immersive surfaces */
+  --safe: #DCEBE4;
+  --warn: #F2EAD8;
+  --warn-ink: #6E5830;
+  --error: #A8423F;
+  --lav: #9BA9D4;
+  --forest: #365C54;
+  --chant: #765F78;
+  --shadow: 0 22px 70px rgba(23, 48, 55, .15);
+
+  /* Spacing: 4px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Shape and motion */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-sheet: 24px;
+  --duration-fast: 150ms;
+  --duration-base: 240ms;
+  --duration-slow: 7000ms;
+  --ease-standard: cubic-bezier(.2, .8, .2, 1);
+
+  /* Type */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 24px;
+  --text-display: 38px;
+}
