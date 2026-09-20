@@ -74,10 +74,10 @@ In `services/api`, create a file named exactly:
 .env
 ```
 
-Add this one line, replacing the example with the completed Session pooler connection string:
+Add this one line. Start with the Session pooler connection string, replace `[YOUR-PASSWORD]` with the database password, then change only its beginning from `postgresql://` to `postgresql+psycopg://`. This explicitly tells SQLAlchemy to use the installed modern Psycopg 3 driver.
 
 ```text
-DATABASE_URL=postgresql://postgres.PROJECT_REF:YOUR_PASSWORD@POOLER_HOST:5432/postgres
+DATABASE_URL=postgresql+psycopg://postgres.PROJECT_REF:YOUR_PASSWORD@POOLER_HOST:5432/postgres
 ```
 
 Save it. Do not show this file to anyone and do not commit it.
@@ -89,7 +89,7 @@ In `services/api`, create `.env.example`. Paste and save:
 ```text
 # Copy this file to .env and replace the placeholder locally.
 # Never commit a real database connection string.
-DATABASE_URL=postgresql://postgres.PROJECT_REF:YOUR_PASSWORD@POOLER_HOST:5432/postgres
+DATABASE_URL=postgresql+psycopg://postgres.PROJECT_REF:YOUR_PASSWORD@POOLER_HOST:5432/postgres
 ```
 
 This template tells a future developer what configuration is required without exposing a secret.
@@ -190,4 +190,3 @@ The connection string is a backend secret, not application code. `.env` supplies
 ## Reference
 
 Supabase connection guidance: <https://supabase.com/docs/guides/database/connecting-to-postgres>
-
