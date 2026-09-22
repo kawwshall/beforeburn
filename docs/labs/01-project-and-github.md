@@ -139,3 +139,24 @@ Refresh the GitHub repository page. The project files and the initial commit sho
 
 Git stores project history locally. GitHub stores a remote copy. `.gitignore` keeps sensitive and machine-specific files out of that history.
 
+## Concept beyond beforeburn
+
+Imagine Maya is building a recipe-sharing app. On Monday she changes the profile screen; on Friday the new code breaks image uploads. Git lets Maya compare the two moments and recover the last known-good version. The same workflow works whether the project is a one-person portfolio site or a team product.
+
+A commit is a meaningful sentence in the project story, not a backup button. Good commits describe one intention: `feat(api): add health endpoint`, not `changes`.
+
+## Independent exercise
+
+Create a new branch for a fictional study-planner feature:
+
+```bash
+git switch -c codex/study-planner-notes
+```
+
+Add a one-line note to `README.md` describing the feature, commit it, then return to the main branch:
+
+```bash
+git switch main
+```
+
+Explain: why is it safer to experiment on a branch than directly on `main`?

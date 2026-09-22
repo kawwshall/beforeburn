@@ -143,3 +143,19 @@ git push
 
 The application code is separate from the Python version and installed packages. A virtual environment can be safely rebuilt whenever the interpreter changes, then repopulated from `requirements.txt`.
 
+## Concept beyond beforeburn
+
+Code does not run by itself. It needs a runtime (Python), dependencies (FastAPI and others), and configuration. A virtual environment makes that combination local to one project.
+
+Think of `requirements.txt` as a recipe card. If Omar clones a habit-tracker project next month, he can create a new virtual environment and install the same ingredients without receiving your entire computer.
+
+## Independent exercise
+
+With `(.venv)` active, run:
+
+```bash
+which python
+python -c "import fastapi; print(fastapi.__version__)"
+```
+
+Then run `deactivate` and repeat those commands. Explain which Python each command uses and why project dependencies should not rely on a random global installation.

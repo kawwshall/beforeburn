@@ -213,3 +213,20 @@ git push
 
 A migration is not moving existing user data. It is a saved, ordered instruction for building or changing database structure. From now on, every table and column change will be made through a migration and committed to GitHub.
 
+## Models, migrations, and the real database
+
+These three things are related but different:
+
+```text
+Model:      readable code describing what a table should look like
+Migration:  versioned instructions for moving from one schema version to another
+Database:   the actual tables currently running in Supabase
+```
+
+Changing a model file does not change an already-running database. A migration performs that change safely and records its order. In later labs, we will use models as the readable design and let Alembic generate a migration draft where appropriate; a developer still reviews it before applying it.
+
+## Independent exercise
+
+Imagine a production app already has `users(name, email)` and needs an optional `avatar_url`.
+
+Write—in plain English—the `upgrade` and `downgrade` actions. Then answer: why is changing an old, already-applied migration worse than adding a new migration?

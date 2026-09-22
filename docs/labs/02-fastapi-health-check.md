@@ -186,3 +186,32 @@ git push
 
 You created a backend that receives an HTTP request and returns JSON. The health check is small, but it proves the basic path that future mobile screens will use: app → API → response.
 
+## How the request travels
+
+When a browser opens `/health`, the sequence is:
+
+```text
+Browser sends GET /health
+        ↓
+FastAPI finds @app.get("/health")
+        ↓
+health_check() runs
+        ↓
+FastAPI turns the Python dictionary into JSON
+        ↓
+Browser receives HTTP 200 and {"status":"ok"}
+```
+
+`GET` means “read information.” The `200` status means “the request succeeded.” Later, `POST` will create data, `PATCH` will change it, and `DELETE` will remove it.
+
+The test is a tiny pretend browser. It sends the same request automatically and checks both the status and JSON response.
+
+## Independent exercise
+
+Add an `/about` route that returns your app name and a one-sentence purpose. Write a second test before or immediately after writing the route.
+
+Questions to answer:
+
+1. Why is `/about` a `GET` route rather than a `POST` route?
+2. What exact JSON response should the test expect?
+3. What would a test catch if someone renamed the JSON key from `name` to `app_name`?

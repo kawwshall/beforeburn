@@ -187,6 +187,28 @@ git push
 
 The connection string is a backend secret, not application code. `.env` supplies it locally, `.env.example` documents the required shape safely, and the one-purpose script proves the backend can reach the empty hosted database.
 
+## Concept beyond beforeburn
+
+Configuration answers “where is this running and how does it connect?” Code answers “what does the app do?” Keeping those separate lets the same code run locally, in testing, and in production with different safe values.
+
+```text
+Mobile app      never receives database password
+Backend API     reads DATABASE_URL from its environment
+Database        accepts trusted backend connection
+```
+
+If a mobile app contained the database URL, anyone could extract it from the app package. This boundary applies to any service secret: database credentials, payment-provider keys, and private API tokens.
+
+## Independent exercise
+
+Add this non-secret setting to `.env.example` and your local `.env`:
+
+```text
+APP_ENV=development
+```
+
+Then modify `scripts/check_database.py` to print the environment name before it connects. Do not use this pattern for passwords: only non-secret settings should be printed.
+
 ## Reference
 
 Supabase connection guidance: <https://supabase.com/docs/guides/database/connecting-to-postgres>

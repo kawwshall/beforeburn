@@ -88,6 +88,22 @@ The **Connect** dialog contains the database connection string. We will copy it 
 
 The database is currently an empty, private place for application data. We will not build tables by clicking in the dashboard. Instead, database migration files in the project will describe and reproduce every structural change.
 
+## Concept beyond beforeburn
+
+Supabase is a managed service: it operates PostgreSQL infrastructure while the app team owns the data design, access rules, credentials, and deletion choices. A managed service saves operational work; it does not remove responsibility for privacy or schema quality.
+
+For a marketplace app, the same project might store users, listings, orders, and payments. For a learning app, it might store courses, lessons, attempts, and progress. The cloud project is the empty building; your schema decides its rooms and locks.
+
+## Independent exercise
+
+For an app idea of your own, write a three-row table in your notes:
+
+```text
+Data the app needs | Is it sensitive? | Who should access it?
+```
+
+This is the first privacy review, before writing a single table.
+
 ## Reference
 
 Supabase documents that connection strings are copied from the project’s **Connect** dialog and must have the database password supplied securely: <https://supabase.com/docs/guides/database/connecting-to-postgres>
