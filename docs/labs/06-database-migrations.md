@@ -198,7 +198,7 @@ Confirm `.env` is not listed. Then run:
 
 ```bash
 git add docs/labs services/api/requirements.txt services/api/alembic.ini services/api/migrations
-git commit -m "chore(api): set up Alembic migrations"
+git commit -m "chore(api): set up Alembic migrationssour
 git push
 ```
 
