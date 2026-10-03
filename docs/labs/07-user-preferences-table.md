@@ -1,240 +1,263 @@
-# Lab 7 — Create the user-preferences table
+# Lab 7 — Model, generate, and apply user preferences
 
 ## Objective
 
-Create the first beforeburn application table, `user_preferences`, through an Alembic migration. It stores preferences that the app will later read and update for each signed-in user.
+Design the first beforeburn data model in readable Python, generate a migration from that model, review the migration, and apply it to Supabase.
+
+This is the usual professional workflow:
+
+```text
+Product statement → SQLAlchemy model → Alembic migration draft → review → database
+```
+
+## Product story
+
+Nysa signs in to beforeburn. She chooses `Asia/Kolkata`, optionally enters her usual sleep window, and enables reduced motion if immersive visuals make her uncomfortable. Those facts must remain available after she closes the app.
+
+One row means: **one authenticated user’s beforeburn preferences**.
 
 ## Prerequisites
 
-- Labs 1–6 completed.
+- Labs 1–6 and the schema-design masterclass completed.
 - `alembic current` reports the baseline revision at `(head)`.
 - The local `.env` database connection works.
 
-## What this table stores
+## The three layers
 
-| Column | Purpose |
+| Layer | Job | Example |
+| --- | --- | --- |
+| Model | Readable current design in Python | `UserPreference` class |
+| Migration | Historical instructions for changing an existing database | `create_user_preferences.py` |
+| Database | Actual running tables | Supabase PostgreSQL |
+
+Changing the model alone does not change Supabase. Alembic compares the model metadata with the database history and generates a migration draft.
+
+## Schema decisions
+
+| Column | Decision and reason |
 | --- | --- |
-| `user_id` | The unique ID of the user in Supabase Auth. One user has one preference row. |
-| `time_zone` | The user’s time zone, needed for dates, reminders, and calendar events. |
-| `sleep_start` / `sleep_end` | Optional usual sleep window used to protect recovery time. |
-| `reduced_motion` | Whether immersive visuals should reduce animation. |
-| `created_at` / `updated_at` | When the preference row was created or last changed. |
+| `user_id` | UUID primary key. One user can have only one preference row. |
+| `time_zone` | Required text, defaulting to `UTC`; dates and reminders need a time zone. |
+| `sleep_start`, `sleep_end` | Optional times; onboarding answers may be skipped. |
+| `reduced_motion` | Required Boolean, default `false`; accessibility preference. |
+| `created_at`, `updated_at` | Time-zone-aware timestamps with database defaults. |
 
-## Vocabulary
-
-- **Table:** a structured collection of related records.
-- **Row:** one record in a table; here, one user’s preferences.
-- **Column:** one named value in every row.
-- **Primary key:** a value that uniquely identifies a row.
-- **Foreign key:** a value that must refer to an existing record in another table.
-- **Constraint:** a database rule that prevents invalid data.
-
-## Design decision
-
-`user_id` is both the primary key and a foreign key to `auth.users.id`, the Supabase Auth user. This guarantees one preference row per real authenticated user and automatically deletes preferences if that user is deleted.
+Supabase owns the `auth.users` table. We will add its cross-schema foreign-key rule in the generated migration review, rather than pretending that beforeburn owns the auth table in its model metadata.
 
 ## Steps
 
-### 1. Activate the backend environment
+### 1. Create the shared model base
 
-From the project root, run:
-
-```bash
-cd services/api
-source .venv/bin/activate
-```
-
-### 2. Create a migration file
-
-Run:
-
-```bash
-alembic revision -m "create user preferences"
-```
-
-Alembic creates a new file in `migrations/versions/`. Its filename has a unique ID. Keep that filename and the generated values of `revision` and `down_revision` unchanged.
-
-### 3. Define the table in the migration
-
-Open the new migration file. Keep its generated `revision` and `down_revision` lines, but replace the bodies of `upgrade()` and `downgrade()` with:
+From `services/api`, create `app/database.py`:
 
 ```python
-def upgrade() -> None:
-    op.create_table(
-        "user_preferences",
-        sa.Column("user_id", sa.Uuid(), nullable=False),
-        sa.Column(
-            "time_zone",
-            sa.String(length=64),
-            nullable=False,
-            server_default=sa.text("'UTC'"),
-        ),
-        sa.Column("sleep_start", sa.Time(), nullable=True),
-        sa.Column("sleep_end", sa.Time(), nullable=True),
-        sa.Column(
-            "reduced_motion",
-            sa.Boolean(),
-            nullable=False,
-            server_default=sa.false(),
-        ),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.text("CURRENT_TIMESTAMP"),
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.text("CURRENT_TIMESTAMP"),
-        ),
-        sa.ForeignKeyConstraint(["user_id"], ["auth.users.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("user_id"),
+from sqlalchemy.orm import DeclarativeBase
+
+
+class Base(DeclarativeBase):
+    """Parent class for beforeburn's SQLAlchemy models."""
+```
+
+**What it means:** every model will inherit from `Base`. SQLAlchemy collects the table descriptions from these model classes into `Base.metadata`; Alembic reads that metadata when generating migrations.
+
+### 2. Create the models package
+
+Create `app/models/__init__.py` with:
+
+```python
+from app.models.user_preference import UserPreference
+
+__all__ = ["UserPreference"]
+```
+
+This import is intentional. It ensures Python loads the model before Alembic looks at `Base.metadata`.
+
+### 3. Create the `UserPreference` model
+
+Create `app/models/user_preference.py`:
+
+```python
+from datetime import datetime, time
+from uuid import UUID
+
+from sqlalchemy import Boolean, DateTime, String, Time, false, text
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.database import Base
+
+
+class UserPreference(Base):
+    """One user's beforeburn preferences."""
+
+    __tablename__ = "user_preferences"
+
+    user_id: Mapped[UUID] = mapped_column(primary_key=True)
+    time_zone: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        server_default=text("'UTC'"),
     )
-
-
-def downgrade() -> None:
-    op.drop_table("user_preferences")
-```
-
-The file must also have these imports near its top:
-
-```python
-from alembic import op
-import sqlalchemy as sa
+    sleep_start: Mapped[time | None] = mapped_column(Time(), nullable=True)
+    sleep_end: Mapped[time | None] = mapped_column(Time(), nullable=True)
+    reduced_motion: Mapped[bool] = mapped_column(
+        Boolean(),
+        nullable=False,
+        server_default=false(),
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
 ```
 
 ## Code walkthrough
 
-Read the migration before running it. It is a small program that describes a database change.
-
 | Code | Meaning |
 | --- | --- |
-| `def upgrade()` | The instructions for moving the database forward to this version. |
-| `op.create_table(...)` | Ask Alembic to create one table. `op` means “database operation.” |
-| `"user_preferences"` | The name of the table that PostgreSQL will create. |
-| `sa.Column(...)` | Define one column: its name, type, and rules. `sa` is the SQLAlchemy library. |
-| `sa.Uuid()` | Store a universally unique identifier. Supabase Auth uses UUIDs for user IDs. |
-| `nullable=False` | This value is required; PostgreSQL rejects a row that omits it. |
-| `server_default=...` | PostgreSQL supplies this value when the application does not. For example, new users begin with `UTC` and reduced motion off. |
-| `sa.Time()` | A time of day, such as `23:00`, without an attached date. |
-| `sa.DateTime(timezone=True)` | A date and time that includes time-zone information. |
-| `sa.ForeignKeyConstraint(...)` | Require `user_id` to point to a real Supabase Auth user. |
-| `ondelete="CASCADE"` | If the auth user is deleted, delete that user’s preferences automatically. |
-| `sa.PrimaryKeyConstraint("user_id")` | Make one row per user. A second preference row with the same ID is rejected. |
-| `def downgrade()` | The reverse of `upgrade()`. It lets developers undo this migration during local development. |
+| `class UserPreference(Base)` | A Python class that SQLAlchemy maps to a database table. |
+| `__tablename__` | The exact PostgreSQL table name. |
+| `Mapped[str]` | The Python type of the value when the application reads a row. |
+| `mapped_column(...)` | The database-column details: SQL type, required/optional rule, and default. |
+| `primary_key=True` | Makes `user_id` unique and required. |
+| `time | None` | The app can receive a time or no value at all. |
+| `server_default` | PostgreSQL creates a value even when another tool—not Python—adds a row. |
+| `DateTime(timezone=True)` | Stores an instant safely across time zones. |
 
-### Predict before running
+`server_default` is different from a Python `default`: it runs inside PostgreSQL. That is safer for imports, admin tools, and future services that may create rows without using this exact Python class.
 
-Answer these questions in your own words before moving to Step 4:
+### 4. Point Alembic at the model metadata
 
-1. Why is `sleep_start` allowed to be empty while `time_zone` is required?
-2. Why does `user_id` make a better primary key here than an automatically generated number?
-3. What would happen to an existing user’s preferences if that user is deleted from Supabase Auth?
-
-## Independent exercise — add one notification preference
-
-Complete the core table first. Then, before you run `alembic upgrade head`, add a new column yourself below `reduced_motion`:
+Open `migrations/env.py`. Add these two imports below the existing SQLAlchemy imports:
 
 ```python
-sa.Column(
-    "morning_plan_notifications",
-    sa.Boolean(),
-    nullable=False,
-    server_default=sa.true(),
-),
+from app.database import Base
+from app import models  # noqa: F401
 ```
 
-Think through the choices:
+Then replace:
 
-- Why is a Boolean appropriate?
-- Why must it have a default?
-- Why does `sa.true()` make sense as a starting value for this specific preference?
+```python
+target_metadata = None
+```
 
-After applying the migration, confirm this extra column appears in Supabase. If you complete the exercise, your table has eight columns rather than seven.
+with:
 
-## Next lesson preview
+```python
+target_metadata = Base.metadata
+```
 
-Lab 8 will introduce API routes. We will first create a `GET /me/preferences` route that returns one user’s data. The guided build will explain how a request becomes a response, and the independent exercise will add a small related route with its own test.
+The unused-looking `models` import is required: it loads `UserPreference`, which registers its table with `Base.metadata`.
 
-### 4. Apply the migration
+### 5. Predict the migration
+
+Before generating it, answer:
+
+1. Which table name should Alembic detect?
+2. Which columns should be nullable?
+3. Which columns should have database defaults?
+4. Why does changing this Python file not immediately create a Supabase table?
+
+### 6. Generate the migration draft
+
+Run from `services/api` with `(.venv)` active:
+
+```bash
+alembic revision --autogenerate -m "create user preferences"
+```
+
+Alembic creates a file inside `migrations/versions/`. Open it before applying it. You should see an `op.create_table("user_preferences", ...)` call with the columns from the model.
+
+### 7. Add the cross-schema foreign key during review
+
+The model cannot fully describe Supabase’s separate `auth.users` table because beforeburn does not own that table’s metadata. In the new migration’s `upgrade()` function, directly after `op.create_table(...)`, add:
+
+```python
+op.create_foreign_key(
+    "user_preferences_user_id_fkey",
+    "user_preferences",
+    "users",
+    ["user_id"],
+    ["id"],
+    source_schema="public",
+    referent_schema="auth",
+    ondelete="CASCADE",
+)
+```
+
+At the beginning of `downgrade()`, before `op.drop_table(...)`, add:
+
+```python
+op.drop_constraint(
+    "user_preferences_user_id_fkey",
+    "user_preferences",
+    schema="public",
+    type_="foreignkey",
+)
+```
+
+**Why `CASCADE`?** A preference row belongs only to its user. If that Supabase Auth account is deleted, keeping its preferences would be private orphaned data with no useful owner.
+
+### 8. Apply and inspect
 
 Run:
 
 ```bash
 alembic upgrade head
+alembic current
 ```
 
-### 5. Verify the table in Supabase
+Open Supabase **Database → Tables → user_preferences**. Confirm its seven columns. Inspect the foreign-key relationship to `auth.users` if the dashboard displays relationships separately.
 
-In Supabase Dashboard, open **Database → Tables** and select `user_preferences`.
-
-Confirm the seven columns exist:
-
-```text
-user_id
-time_zone
-sleep_start
-sleep_end
-reduced_motion
-created_at
-updated_at
-```
-
-The dashboard may also display system details and constraints separately. The key facts are that `user_id` is the primary key and points to `auth.users`.
-
-### 6. Verify migration history and existing test
+### 9. Test and commit
 
 Run:
 
 ```bash
-alembic current
 python -m pytest
 ```
 
-The first command should show the new revision as `(head)`. The second should report `1 passed`.
-
-### 7. Commit and push
-
-From the project root, run:
+Then, from the project root:
 
 ```bash
 cd ../..
 git status
 ```
 
-Confirm `.env` is not listed. Then commit:
+Confirm `.env` is not listed, then commit the safe files:
 
 ```bash
-git add docs/labs services/api/migrations
+git add docs/labs services/api/app services/api/migrations
 git commit -m "feat(api): add user preferences schema"
 git push
 ```
 
-## Verify
+## Independent exercise
 
-- `user_preferences` appears in Supabase.
-- It has the intended columns and a `user_id` primary key.
-- `alembic current` identifies the new migration as `(head)`.
-- Existing tests pass.
+Before running `alembic upgrade head`, add a new model field for a morning-plan notification preference:
+
+```python
+morning_plan_notifications: Mapped[bool] = mapped_column(
+    Boolean(),
+    nullable=False,
+    server_default=text("true"),
+)
+```
+
+Generate a fresh migration only after adding the model. Then inspect whether Alembic included the new column.
+
+Explain:
+
+1. Why is this a Boolean rather than text?
+2. Why does it need a default?
+3. What would happen if it were `nullable=False` with no default while existing users already had preference rows?
 
 ## What you learned
 
-This migration is the source of truth for the table. The table is not just a visual dashboard object: it is a repeatable, reviewable piece of project code with a matching reverse operation (`downgrade`).
+Models make the present schema readable. Migrations make schema history repeatable. Autogeneration accelerates normal work, but review remains essential—especially where a database has externally owned tables, sensitive data, or non-trivial constraints.
 
-## General app-development connection
-
-The same pattern applies to any product preference table:
-
-```text
-fitness app: goal, measurement unit, reminder preference
-reading app: reading target, theme, notification preference
-delivery app: default address, language, contact preference
-```
-
-The product statement comes first; the table is its careful translation. A good schema asks what one row means, which values must be true, and what should happen if its owner disappears.
-
-## After this manual example
-
-This lab deliberately shows the migration directly so you can see the database rules in full. The next schema lesson will also introduce a readable SQLAlchemy model file and show how it relates to an Alembic-generated migration. The model is the design; the migration is the documented change; both are professional tools.

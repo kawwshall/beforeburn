@@ -183,6 +183,19 @@ git push
 - `.env` does not appear in `git status`.
 - GitHub contains `.env.example`, never `.env`.
 
+## Troubleshooting — `tenant/user ... not found`
+
+If Psycopg or Alembic reports `FATAL: (ENOTFOUND) tenant/user postgres.<project-ref> not found`, the shared pooler could not match the host and username to the Supabase project. This is usually **not** a password error.
+
+1. Open the Supabase Dashboard and confirm the project is active; resume it if the dashboard says it is paused.
+2. Open **Connect**, choose **Session pooler**, and copy the entire fresh connection string.
+3. Replace the whole local `DATABASE_URL` value with that fresh string, inserting the password only where Supabase places its placeholder.
+4. Change only the protocol at its beginning from `postgresql://` to `postgresql+psycopg://` so SQLAlchemy uses Psycopg 3.
+5. Never construct the pooler host from the region. The cluster number in a host such as `aws-1-...pooler.supabase.com` must be copied from the dashboard.
+6. Run `python -m scripts.check_database` before retrying Alembic.
+
+Supabase explains that the pooler host or username—not the password—is almost always the issue for this error: <https://supabase.com/docs/guides/troubleshooting/tenant-or-user-not-found>
+
 ## What you learned
 
 The connection string is a backend secret, not application code. `.env` supplies it locally, `.env.example` documents the required shape safely, and the one-purpose script proves the backend can reach the empty hosted database.
