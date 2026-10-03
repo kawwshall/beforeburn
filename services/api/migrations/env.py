@@ -4,6 +4,8 @@ from logging.config import fileConfig
 from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
+from app.database import Base
+from app import models  # noqa: F401
 
 config = context.config
 
@@ -22,8 +24,7 @@ if not database_url:
 config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
 # Models will be added in a later lab. For now, migrations are written manually.
-target_metadata = None
-
+target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
     context.configure(
