@@ -31,5 +31,4 @@ A lab is done only when its product behavior works, tests pass, accessibility an
 - Labs 1–10: completed foundation.
 - Labs 11–12: Expo scaffold and theme completed.
 - Lab 13: currently in progress.
-- Labs 14–16: detailed course material is available; implementation begins after Lab 13.
-- Later labs are planned product work until their detailed course documents are added.
+- Labs 14–45: lesson documents are present in `docs/labs/`; application implementation proceeds as the learner completes each lesson.

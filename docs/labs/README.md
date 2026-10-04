@@ -12,6 +12,16 @@ Problem → concept → small build → inspect → test → explain → change 
 
 Do not treat a green test as the end. The learner should be able to explain what was built, predict what a small change will do, and make one safe change independently.
 
+## How to work through the labs
+
+The labs form one ordered build. A later lab may rely on files created earlier, so first confirm its prerequisites and the preceding lab's verification passed. In VS Code, create any missing parent folders when you create a nested file. Run commands from the directory named in the lesson; use a second terminal when a lesson needs API and mobile running at the same time. Replace clearly marked placeholders with your own values, and never paste secrets into source files or commit them.
+
+Each lesson must include the product goal, a plain-language concept explanation, complete copy-ready contents for new core files and exact copy-ready inserts/replacements for existing files, every command in execution order, an explanation of important code, verification, likely failures, a small independent exercise, and a commit step. A learner must not be asked to invent a model, route, service, API contract, or screen needed for the required app. Exercises may ask them to make a bounded variation after the working baseline exists. The phase folders under `docs/sprints/` are navigation aids; this directory contains the course.
+
+## Code completeness rule
+
+Treat prose such as “create a service that does X” as incomplete unless the lesson also supplies the exact service code and imports. For every backend feature, include model/schema, migration instructions, service, route registration, tests, and mobile API/UI states as applicable. For every mobile feature, include imports, component/screen code, loading/error/empty/success states, and the API call. When code depends on a prior lab, name the exact file and exported function it uses. Do not label a lesson finished based on a short brief, pseudocode, or an architectural outline.
+
 ## Running example
 
 beforeburn is the running product: it helps people plan energy around busy schedules. Each concept is also connected to a second, simpler example, so it transfers to other ideas such as a habit tracker, book club, delivery app, study planner, or marketplace.

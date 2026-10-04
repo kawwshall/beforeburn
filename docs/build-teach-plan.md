@@ -11,7 +11,7 @@ Build first:
 - Account and profile
 - Google Calendar connection
 - Read-only calendar sync
-- Day, week, and month views
+- Day, week, and month view s
 - Daily energy check-in
 - Explainable workload suggestions
 - User-approved recovery blocks
