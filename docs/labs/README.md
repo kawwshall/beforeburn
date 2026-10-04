@@ -28,7 +28,10 @@ beforeburn is the running product: it helps people plan energy around busy sched
 | 6 | Versioned migration system | Database history, deployable schema changes |
 | 6A | Schema-design masterclass | Entities, relationships, constraints, indexes, ETL |
 | 7 | User-preferences schema | Turning a product statement into a table and migration |
-| 8+ | API routes, authentication, calendar data | Models, validation, ownership, external integrations |
+| 8–10 | API routes, authentication, and preferences | Models, validation, ownership, and service boundaries |
+| 11–13 | Expo foundation, design tokens, and navigation | Mobile app structure and accessible navigation |
+| 14–16 | Authentication, onboarding, and account preferences | Sessions, authenticated requests, durable user settings |
+| 17–45 | Calendar, energy, recovery, privacy, quality, and release | The remaining end-to-end product curriculum |
 
 ## A lesson should always answer
 
@@ -56,4 +59,3 @@ Independent learner exercise:
 ## What “professional” means here
 
 Professional does not mean using the most tools. It means making choices that another developer can understand, reproduce, test, review, and safely change later.
-
